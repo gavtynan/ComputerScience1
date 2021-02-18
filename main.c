@@ -1,34 +1,64 @@
 //
 //  main.c
-//  queue_lesson
+//  StackWork
 //
-//  Created by Gavin Tynan on 1/30/20.
+//  Created by Gavin Tynan on 1/29/20.
 //  Copyright © 2020 Gavin Tynan. All rights reserved.
 //
 
 #include <stdio.h>
-#define INIT_SIZE 10
-
-struct queue {
-    int* elements;
-    int front;
-    int numElements;
-    int queueSize;
-};
-
-void init(struct queue* qPtr);
-int enqueue(struct queue* qPtr, int val);
-int dequeue(struct queue* qPtr);
-int empty(struct queue* qPtr);
-int peek(struct queue* qPtr);
 
 int main(int argc, const char * argv[]) {
-
-    int i;
+    int choice;
+    char exp[SIZE], c, valid;
+    stack myStack;
     
-    return 0;
+    initialize(&myStack);
+    while(1) {
+        valid = 1;
+        printf("1Enter Expression. 2Exit. Enter Choice");
+        scanf("%d", &choice);
+        if(choice == 2) {
+            break;
+            
+        }
+        else if(choice == 1) {
+            printf("Enter Expression");
+            scanf(" %[^\n]s", exp);
+            printf("your exp,: %s", exp);
+            for(int i = 0; exp[i] != '\0'; i++) {
+                if(exp[i] == '(' || exp[i] == '{' || exp[i] == '[')
+                    push(&myStack, exp[i]);
+                
+                
+                else if(exp[i] == ')') {
+                    c = pop(&myStack);
+                    if(c == 'I' || c != '(') {
+                        valid = 'I'
+                        printf("Invalid at %d", i);
+                        break;
+                    }//inner if
+                }//outer else
+                /*else if(exp[i] == '}') {
+                    c = pop(&myStack);
+                    if(c == 'I' || c != '{') {
+                        valid = 'I'
+                        printf("Invalid at %d", i);
+                        break;
+                    }//inner if
+                }//outer else*/
+                
+                else if(exp[i] == ']') {
+                    c = pop(&myStack);
+                    if(c == 'I' || c != '[') {
+                        valid = 'I'
+                        printf("Invalid at %d", i);
+                        break;
+                    }//inner if
+                }//outer else
+            }
+        }
+    }
 }
-
-void init(struct queue* qPtr) {
-    
+    return 0;
 }
