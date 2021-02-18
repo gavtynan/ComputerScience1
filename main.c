@@ -1,340 +1,225 @@
-//Gavin Tynan
-//Final Term Assignment 2
+//
+//  main.c
+//  finalterm_assignment_1
+//
+//  Created by Gavin Tynan on 3/13/20.
+//  Copyright © 2020 Gavin Tynan. All rights reserved.
+//
 
 #include <stdio.h>
-#include <string.h>
+#include <math.h>
 #include <stdlib.h>
 
-#define MAX 30
+struct Covid19{
+    int x;
+    int y;
+};
 
-struct treeNode
-{
-    char word[MAX];
-    struct treeNode *LNode;
-    struct treeNode *RNode;
-}*node;
+struct Covid19* ReadData(FILE * fpIn, int *x1, int *y1, int *k, int *Q);
+struct Covid19* FilterData(struct Covid19* Data, int x1, int y1, int k, int *Q);
+void merge(struct Covid19* Data, int l, int m, int k);
+void mergeSort(struct Covid19* Data, int l, int k);
+int binarySearch(struct Covid19* Data, int x, int y, int Q);
+int SearchPhase(struct Covid19* Data, int Q);
+void printArr(struct Covid19* Data, int size, FILE * fpOut);
 
-void searchWord(char word[], struct treeNode **BigNode, struct treeNode **Pos){
+int main(){
+    FILE * fpIn;
+    FILE * fpOut;
+    struct Covid19* Data;
+    int x1;
+    int y1;
+    int k;
+    int Q;
     
-    struct treeNode *ptr, *tempPtr;
-    if (node == NULL){
-        *Pos = NULL;
-        *BigNode = NULL;
-        return;
-    }
-    if (strcmp(word, node->word) == 0){
-        *Pos = node;
-        *BigNode = NULL;
-        return;
-    }
-    if (strcmp(word, node->word) < 0)
-        ptr = node->LNode;
-    else
-        ptr = node->RNode;
+    fpIn = fopen("in.txt", "r");
+    fpOut = fopen("out.txt", "w");
+    Data = ReadData(fpIn, &x1, &y1, &k, &Q);
+    Data = FilterData(Data, x1, y1, k, &Q);
+    mergeSort(Data, 0, Q-1);
+    printArr(Data, Q, fpOut);
+    fclose(fpIn);
+    fclose(fpOut);
+    SearchPhase(Data, Q);
     
-    tempPtr = node;
-    
-    while (ptr != NULL){
-        if (strcmp(word, ptr->word) == 0){
-            *Pos = ptr;
-            *BigNode = tempPtr;
-            return;
-        }
-        tempPtr = ptr;
-        
-        if (strcmp(word, ptr->word) <= 0)
-            ptr = ptr->LNode;
-        else
-            ptr = ptr->RNode;
-    }
-    *Pos = NULL;
-    *BigNode = tempPtr;
-}
-
-void insertWord(char word[]){
-    
-    struct treeNode *BigNode, *Pos, *temp;
-    searchWord(word, &BigNode, &Pos);
-    
-    if (Pos != NULL){
-        return;
-    }
-    
-    temp = (struct treeNode*) malloc(sizeof(struct treeNode));
-    strcpy(temp->word, word);
-    temp->LNode = NULL;
-    temp->RNode = NULL;
-    
-    if (BigNode == NULL)
-        node = temp;
-    else
-        if (strcmp(word, BigNode->word) <= 0)
-            BigNode->LNode = temp;
-        else
-            BigNode->RNode = temp;
-}
-
-void bothNodesEmpty(struct treeNode *BigNode, struct treeNode *Pos){
-    
-    if (BigNode == NULL)
-        node = NULL;
-    else
-        if (Pos == BigNode->LNode)
-            BigNode->LNode = NULL;
-        else
-            BigNode->RNode = NULL;
-}
-
-void oneNodeEmpty(struct treeNode *BigNode, struct treeNode *Pos){
-    
-    struct treeNode *child;
-    if (Pos->LNode != NULL)
-        child = Pos->LNode;
-    else
-        child = Pos->RNode;
-    if (BigNode == NULL)
-        node = child;
-    else
-        if (Pos == BigNode->LNode)
-            BigNode->LNode = child;
-        else
-            BigNode->RNode = child;
-}
-
-void noNodesEmpty(struct treeNode *BigNode, struct treeNode *Pos){
-    
-    struct treeNode *ptr, *tempPtr, *next, *prev;
-    tempPtr = Pos;
-    ptr = Pos->RNode;
-    while (ptr->LNode != NULL){
-        tempPtr = ptr;
-        ptr = ptr->LNode;
-    }
-    next = ptr;
-    prev = tempPtr;
-    if (next->LNode == NULL && next->RNode == NULL)
-        bothNodesEmpty(prev, next);
-    else
-        oneNodeEmpty(prev, next);
-    if (BigNode == NULL)
-        node = next;
-    else
-        if (Pos == BigNode->LNode)
-            BigNode->LNode = next;
-        else
-            BigNode->RNode = next;
-    next->LNode = Pos->LNode;
-    next->RNode = Pos->RNode;
-}
-
-int deleteWord(char word[],FILE* fout)
-{
-    struct treeNode *BigNode, *Pos;
-    if (node == NULL)
-    {
-        fprintf(fout, "The Tree Is Empty");
-        return 0;
-    }
-    
-    searchWord(word, &BigNode, &Pos);
-    if (Pos == NULL)
-    {
-        fprintf(fout, "Item is not in tree");
-        return 0;
-    }
-    if (Pos->LNode == NULL && Pos->RNode == NULL)
-        bothNodesEmpty(BigNode, Pos);
-    if (Pos->LNode != NULL && Pos->RNode == NULL)
-        oneNodeEmpty(BigNode, Pos);
-    if (Pos->LNode == NULL && Pos->RNode != NULL)
-        oneNodeEmpty(BigNode, Pos);
-    if (Pos->LNode != NULL && Pos->RNode != NULL)
-        noNodesEmpty(BigNode, Pos);
-    fprintf(fout, "\n%s: Deleted", Pos->word);
-    free(Pos);
-    return 1;
-}
-
-
-int preOrder(struct treeNode *ptr, FILE* fout)
-{
-    if (node == NULL)
-    {
-        fprintf(fout, "The Tree Is Empty");
-        return 0;
-    }
-    if (ptr != NULL)
-    {
-        fprintf(fout, "%s ", ptr->word);
-        preOrder(ptr->LNode, fout);
-        preOrder(ptr->RNode, fout);
-    }
-    return 1;
-}
-
-void inOrder(struct treeNode *ptr,FILE* fout)
-{
-    if (node == NULL)
-    {
-        fprintf(fout, "The Tree Is Empty");
-        return;
-    }
-    if (ptr != NULL)
-    {
-        inOrder(ptr->LNode, fout);
-        fprintf(fout, "%s ", ptr->word);
-        inOrder(ptr->RNode, fout);
-    }
-}
-
-void postOrder(struct treeNode *ptr,FILE* fout)
-{
-    if (node == NULL)
-    {
-        fprintf(fout, "The Tree Is Empty");
-        return;
-    }
-    if (ptr != NULL)
-    {
-        postOrder(ptr->LNode, fout);
-        postOrder(ptr->RNode, fout);
-        fprintf(fout, "%s ", ptr->word);
-    }
-}
-void alphabetic(struct treeNode *ptr)
-{
-    if (ptr != NULL)
-    {
-        alphabetic(ptr->LNode);
-        alphabetic(ptr->RNode);
-    }
-}
-
-int CountBefore(struct treeNode* ptr, char searchword[]) {
-    int count = 0;
-    
-    if(ptr != NULL) {
-        if(strcmp(ptr->word, searchword) < 0) {
-            count++;
-        }
-        count += CountBefore(ptr->LNode, searchword);
-        count += CountBefore(ptr->RNode, searchword);
-    }
-    return count;
-}
-
-
-int tc = 0;
-int TotalCharacter(struct treeNode *ptr)
-{
-    
-    if (ptr != NULL)
-    {
-        TotalCharacter(ptr->LNode);
-        tc = tc + (strlen(ptr->word));
-        //printf("\nStrlen : %lu", (strlen(ptr->word)));
-        TotalCharacter(ptr->RNode);
-        
-    }
-    return tc;
-}
-int max(int a, int b)
-{
-    return (a >= b) ? a : b;
-}
-
-int height (struct treeNode *ptr){
-    if (ptr == NULL)
-        return 0;
-    return 1 + max(height(ptr->LNode), height(ptr->RNode));
-}
-
-int isBalanced(struct treeNode* ptr, FILE* fout){
-    int lh=0;
-    int rh=0;
-    if (ptr == NULL)
-        return 1;
-    
-    lh = height(ptr->LNode);
-    rh = height(ptr->RNode);
-    
-    if (abs(lh - rh) <= 1 && isBalanced(ptr->LNode, fout) && isBalanced(ptr->RNode, fout)) {
-        fprintf(fout, "\nThis Tree is Balanced");
-        return 1;
-    }
-    fprintf(fout, "\nThis Tree is NOT Balanced");
     return 0;
-}
+} //end main
 
-int main()
-{
+struct Covid19* ReadData(FILE *fpIn, int *x1, int *y1, int *k, int *Q) {
+    fscanf(fpIn, "%d", x1);
+    fscanf(fpIn, "%d", y1);
+    fscanf(fpIn, "%d", k);
+    fscanf(fpIn, "%d", Q);
     
-    char word[MAX];
-    int numOfReadWords, numOfSearchWords, numOfDeleteWords, i;
-    node = NULL;
-    struct treeNode *Pos;
-    FILE *fin = fopen("in.txt", "r");
-    FILE *fout = fopen("out.txt", "w");
+    struct Covid19* Data = (struct Covid19*) malloc(*Q * sizeof(struct Covid19));
     
+    for(int i = 0; i < *Q; i++) {
+        fscanf(fpIn, "%d", &Data[i].x);
+        fscanf(fpIn, "%d", &Data[i].y);
+    }//end for
+    return Data;
+}//end ReadData
+
+void mergeSort(struct Covid19* Data, int l, int k) {
     
-    if (fin == NULL){
-        puts("Error: file could not be opened.");
-        return 0;
-    }
-    
-    fscanf(fin, "%d %d %d", &numOfReadWords, &numOfSearchWords, &numOfDeleteWords);
-    
-    for (i = 1; i <= numOfReadWords; i++){
-        fscanf(fin, "%s", word);
-        insertWord(word);
-    }
-    
-    fprintf(fout,"Pre Order: ");
-    preOrder(node, fout);
-    fprintf(fout,"\nIn Order: ");
-    inOrder(node, fout);
-    fprintf(fout,"\nPost Order: ");
-    postOrder(node, fout);
-    fprintf(fout,"\nTotal Characters: %d",TotalCharacter(node));
-    
-    fprintf(fout,"\nheight of Left: %d",height(node -> LNode));
-    fprintf(fout,"\nheight of Right: %d",height(node -> RNode));
-    isBalanced(node, fout);
-    fprintf(fout,"\n\nSearch Phase:");
-    
-    for (i = 1; i <= numOfSearchWords; i++)
-    {
-        struct treeNode *temp = node;
+    if (l < k) {
         
-        fscanf(fin, "%s", word);
-        int flag = 0;
-        while (temp != NULL)
-        {
-            if (strcmp(word, temp->word) == 0)
-            {
-                fprintf(fout,"\n%s: Found.", word);
-                fprintf(fout,"\nItems before: %d", CountBefore(node, word));
-                flag = 1;
-                break;
-            }
-            if (strcmp(word, temp->word) <= 0)
-                temp = temp->LNode;
-            else
-                temp = temp->RNode;
-        }
-        if (flag == 0)
-            fprintf(fout,"\n%s: Not Found.", word);
-    }
+        int m = (l+k)/2; // Same as (l+k)/2 butt no overflow
+        mergeSort(Data, l, m); // Time to sort both sides
+        mergeSort(Data, m+1, k);
+        
+        //printf("TestAAA l=%d k=%d m=%d\n", l, k, m);
+        
+        merge(Data, l, m, k);
+    }//end if
+}//end merge
+
+void printArr(struct Covid19* Data, int size, FILE * fpOut) {
     
-    fprintf(fout,"\n\nDelete Phase:");
+    for (int i=0; i < size; i++) {
+        fprintf(fpOut, "%d %d\n", Data[i].x, Data[i].y);
+    }//end for
+}//end printArr
+
+struct Covid19* FilterData(struct Covid19* Data, int x1, int y1, int k, int *Q) {
     
-    for (i = 1; i <= numOfDeleteWords; i++){
-        fscanf(fin, "%s", word);
-        deleteWord(word, fout);
-    }
+    int j = 0;
+    int filter = 0;
+    int filterSize;
     
-    fprintf(fout,"\n");
-    fprintf(fout,"\nIn Order: ");
-    inOrder(node, fout);
+    for (int i = 0; i < *Q; i++) {
+        
+        if(pow(Data[i].x - x1, 2) + pow(Data[i].y-y1, 2) > pow(k,2))
+            filter++;
+    }//end for
+    
+    filterSize = *Q - filter;
+    
+    struct Covid19* Corona = (struct Covid19*)malloc(filterSize * sizeof(struct Covid19));
+    
+    for(int i = 0; i < *Q; i++) {
+        
+        if(pow(Data[i].x - x1, 2) + pow(Data[i].y-y1, 2) <= pow(k,2)) {
+            
+            Corona[j].x = Data[i].x;
+            Corona[j].y = Data[i].y;
+            j++;
+        }//end if
+    }//end for
+    *Q = filterSize;
+    return Corona;
+}//end FilterData
+
+void merge(struct Covid19* Data, int l, int m, int k) {
+    
+    int i;
+    int j;
+    int q;
+    int temp1 = m - l + 1;
+    int temp2 = k - m;
+    
+    struct Covid19* LeftSide = (struct Covid19*) malloc(temp1 * sizeof(struct Covid19));//creating temp arrays
+    struct Covid19* RightSide = (struct Covid19*) malloc(temp2 * sizeof(struct Covid19));//creating temp arrays
+    
+    for (i = 0; i < temp1; i++) {// Copying info into temp1&2 arrays L[] and R[]
+        LeftSide[i] = Data[l + i];
+    }//end for
+    
+    for (j = 0; j < temp2; j++) {
+        RightSide[j] = Data[m + 1+ j];
+    }//end for
+    
+    //first index's thingys?
+    i = 0;
+    j = 0;
+    q = l;
+    
+    while (i < temp1 && j < temp2) {
+        if(LeftSide[i].x != RightSide[j].x) {
+            if (LeftSide[i].x <= RightSide[j].x) {
+                Data[q] = LeftSide[i];
+                i++;
+            }//end if
+            else {
+                Data[q] = RightSide[j];
+                j++;
+            }//end else
+        }//end if
+        else if(LeftSide[i].x == RightSide[j].x) {
+            if (LeftSide[i].y <= RightSide[j].y) {
+                Data[q] = LeftSide[i];
+                i++;
+            }//end if
+            else {
+                Data[q] = RightSide[j];
+                j++;
+            }//end else
+        }//end else if
+        q++;
+    }//end big while
+    //coping the left over elements of RightSide and LeftSide
+    while (i < temp1) {
+        Data[q] = LeftSide[i];
+        i++;
+        q++;
+    }//end while
+    
+    while (j < temp2) {
+        Data[q] = RightSide[j];
+        j++;
+        q++;
+    }//end while
+}//end merge
+
+int binarySearch(struct Covid19* Data, int x, int y, int Q) {
+    int l = 0;
+    int h = Q - 1;
+    int j = 0;
+    int k = Q - 1;
+    int mid;
+    int mid2;
+    while (l <= h) {
+        mid = (l + h) / 2;
+        // Check if item is present at mid
+        if ((Data[mid].x == x) && (Data[mid].y == y))
+            return mid+1;
+        // If item greater, ignore left half
+        if ((Data[mid].x < x) || ((Data[mid].x == x) && (Data[mid].y < y)))
+            l = mid + 1;
+        
+        // If item is smaller, ignore right half
+        else
+            h = mid - 1;
+    }//end while
+    // if we reach here, then element was
+    // not present
+    return -1;
+}//end binarySearch
+
+int SearchPhase(struct Covid19* Data, int Q) {
+    int x;
+    int y;
+    int Datasrch;
+    while(1) {
+        printf("\nEnter and X and Y coordinate\n");
+        printf("Example: -2 (SPACE) 2\n");
+        printf("\nSearch Input: ");
+        scanf("%d %d", &x, &y);
+        printf("\n~~~~~~ Results: ");
+        
+        if((x == -999) || (y == -999)) {
+            printf("Quit ~~~~~~\n");
+            break;
+        }//end if
+        
+        Datasrch = binarySearch(Data, x, y, Q);
+        
+        if(Datasrch == -1) {
+            printf("Non-Existent ~~~~~~\n");
+        }//end if
+        else {
+            printf("Found at record %d ~~~~~~\n", Datasrch);
+        }//end else
+    }//end while 1
     return 0;
 }
